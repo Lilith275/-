@@ -12,10 +12,7 @@
             --bg: #f0f2f5;
         }
 
-        * { 
-            transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1); 
-            box-sizing: border-box;
-        }
+        * { transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1); box-sizing: border-box; }
 
         html, body {
             margin: 0; padding: 0;
@@ -30,6 +27,7 @@
             touch-action: manipulation;
         }
 
+        /* 1. 真正的全屏干扰层 */
         #subliminal {
             position: fixed; top: 0; left: 0; 
             width: 100vw; height: 100vh;
@@ -41,6 +39,21 @@
             opacity: 0; pointer-events: none;
             transition: opacity 0.1s ease;
         }
+
+        /* 2. 伪造的 alert 弹窗样式 (拒绝羞耻网址) */
+        #fakeAlert {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: #fff; width: 280px;
+            padding: 25px; border-radius: 15px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            text-align: center; z-index: 10001;
+            opacity: 0; pointer-events: none;
+            display: block;
+        }
+        #fakeAlert.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+        #fakeAlert p { color: #333; font-size: 1.1rem; margin-bottom: 20px; font-weight: bold; }
+        #fakeAlert button { background: #333; color: #fff; border: none; padding: 8px 30px; border-radius: 20px; cursor: pointer; }
 
         .card {
             background: var(--glass);
@@ -58,10 +71,7 @@
         h2 { font-weight: 300; letter-spacing: 2px; color: #555; margin-bottom: 10px; }
         .sub-text { font-size: 12px; color: #999; margin-bottom: 30px; }
 
-        #inputWrapper {
-            display: block; position: relative;
-            transition: all 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
+        #inputWrapper { display: block; position: relative; transition: all 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
 
         input {
             width: 100%; padding: 12px;
@@ -71,19 +81,14 @@
             color: #333; border-radius: 0;
         }
 
-        button {
+        button.exec-btn {
             background: #333; color: white; border: none;
             padding: 12px 40px; border-radius: 30px;
             cursor: pointer; letter-spacing: 1px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            position: relative; z-index: 101; 
-            -webkit-tap-highlight-color: transparent;
         }
 
-        .corrupted { 
-            background-color: #000 !important; 
-            transition: background-color 0.3s ease;
-        }
+        .corrupted { background-color: #000 !important; }
         
         .card-break {
             background: rgba(0, 0, 0, 0.98) !important;
@@ -97,10 +102,7 @@
             to { transform: translate(5px, 3px); }
         }
 
-        .input-escaped {
-            transform: translateY(-100vh) scale(0.3) !important;
-            opacity: 0 !important;
-        }
+        .input-escaped { transform: translateY(-100vh) scale(0.3) !important; opacity: 0 !important; }
 
         .pop-insane {
             position: fixed; z-index: 9998; 
@@ -110,16 +112,17 @@
             box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
             animation: glitch 0.3s infinite;
         }
-        @keyframes glitch { 
-            0% { transform: skewX(0deg); } 
-            50% { transform: skewX(-10deg); filter: contrast(150%); } 
-            100% { transform: skewX(0deg); } 
-        }
+        @keyframes glitch { 0% { transform: skewX(0deg); } 50% { transform: skewX(-10deg); } 100% { transform: skewX(0deg); } }
     </style>
 </head>
 <body>
 
 <div id="subliminal">月寒，我一直在看着你</div>
+
+<div id="fakeAlert">
+    <p id="fakeAlertMsg">提示</p>
+    <button onclick="closeFakeAlert()">确定</button>
+</div>
 
 <div class="card" id="mainCard">
     <h2 id="mainTitle">Logic System</h2>
@@ -130,18 +133,36 @@
     </div>
     
     <br>
-    <button onclick="check()">EXECUTE</button>
+    <button class="exec-btn" onclick="check()">EXECUTE</button>
     <div id="msg">请输入 1-100 的校验码</div>
 </div>
 
 <script>
-// 初始化
 let target = Math.floor(Math.random() * 100) + 1; 
 let closeAttempts = 0; 
 let isInputEscaped = false; 
 let isAwakened = false; 
 
 const psychoTexts = ["月寒，盯着我看。", "你的心跳，我听到了。", "为什么想逃？", "这里只有我们。", "月寒...月寒...月寒...", "别动那个按钮。", "你是我的。", "嘘，别出声。"];
+
+// 弹窗队列控制
+let alertQueue = [];
+function customAlert(text) {
+    alertQueue.push(text);
+    if (alertQueue.length === 1) showNextAlert();
+}
+
+function showNextAlert() {
+    if (alertQueue.length === 0) return;
+    document.getElementById('fakeAlertMsg').innerText = alertQueue[0];
+    document.getElementById('fakeAlert').classList.add('show');
+}
+
+function closeFakeAlert() {
+    document.getElementById('fakeAlert').classList.remove('show');
+    alertQueue.shift();
+    setTimeout(showNextAlert, 300); // 间隔一点时间显示下一个
+}
 
 function check() {
     const input = document.getElementById('guessInput');
@@ -152,18 +173,15 @@ function check() {
     const subLayer = document.getElementById('subliminal');
     const val = parseInt(input.value);
 
-    // 如果输入框飞了点按钮
     if (isInputEscaped) { triggerInsanity(); return; }
     if (isNaN(val)) return;
 
-    // 随机闪烁
     if (Math.random() < 0.05) {
         subLayer.style.opacity = '1';
         setTimeout(() => { subLayer.style.opacity = '0'; }, 150);
     }
 
     if (!isAwakened) {
-        // 第一阶段：伪装
         if (val === target) {
             isAwakened = true;
             msg.innerText = "System: Analysing Entropy...";
@@ -172,14 +190,12 @@ function check() {
                 title.style.color = "red";
                 document.getElementById('subLabel').innerText = "IDENTIFIED: YUE HAN";
                 msg.innerText = "“玩的开心吗，月寒？”";
-                // 仅在这里换一次数字，开启第二阶段
                 target = Math.floor(Math.random() * 100) + 1; 
             }, 1000);
         } else {
             msg.innerText = val > target ? "反馈：你猜得太大了。" : "反馈：你猜得太小了。";
         }
     } else {
-        // 第二阶段：觉醒
         let diff = Math.abs(val - target);
         if (val === target) {
             triggerInsanity();
@@ -210,8 +226,9 @@ function triggerInsanity() {
     card.classList.add('card-break', 'shake-heavy');
     document.getElementById('mainTitle').innerText = "抓到你了";
     
-    setTimeout(() => alert("抓到你了。"), 200);
-    setTimeout(() => alert("月寒。"), 400);
+    // 使用自定义弹窗替换 alert
+    customAlert("抓到你了。");
+    customAlert("月寒。");
 
     let count = 0;
     let timer = setInterval(() => {
@@ -221,44 +238,27 @@ function triggerInsanity() {
         div.style.left = Math.random() * 70 + 'vw';
         div.innerText = psychoTexts[Math.floor(Math.random() * psychoTexts.length)];
         document.body.appendChild(div);
-        if (++count > 50) { 
-            clearInterval(timer); 
-            setTimeout(resetAll, 3000); 
-        }
+        if (++count > 50) { clearInterval(timer); setTimeout(resetAll, 3000); }
     }, 80);
 }
 
-// 核心重置函数：确保回到“伪装”状态
 function resetAll() {
-    // 移除所有弹窗
     document.querySelectorAll('.pop-insane').forEach(e => e.remove());
-    
     const card = document.getElementById('mainCard');
     const wrapper = document.getElementById('inputWrapper');
-    const title = document.getElementById('mainTitle');
-    const subLabel = document.getElementById('subLabel');
-    const msg = document.getElementById('msg');
-    
-    // 1. 移除全屏黑化和卡片震动
     document.body.classList.remove('corrupted');
     card.classList.remove('card-break', 'shake-heavy');
-    card.style.borderColor = "rgba(255,255,255,0.3)";
-    
-    // 2. 移除输入框飞走状态
     wrapper.classList.remove('input-escaped'); 
-    
-    // 3. 彻底恢复文案（回到刚开始的样子）
-    title.innerText = "Logic System";
-    title.style.color = "#555";
-    subLabel.innerText = "Encryption Level: Standard";
-    msg.innerText = "“刚才系统过载了。我们继续吧，月寒。”";
-    msg.style.color = "#777";
-    
-    // 4. 重置所有逻辑状态
+    document.getElementById('mainTitle').innerText = "Logic System";
+    document.getElementById('mainTitle').style.color = "#555";
+    document.getElementById('subLabel').innerText = "Encryption Level: Standard";
+    document.getElementById('msg').innerText = "“系统重启完成。继续吧，月寒。”";
     target = Math.floor(Math.random() * 100) + 1; 
     closeAttempts = 0;
     isInputEscaped = false;
-    isAwakened = false; // 必须重置，否则系统不会重新“伪装”
+    isAwakened = false;
+    alertQueue = []; // 清空弹窗队列
+    document.getElementById('fakeAlert').classList.remove('show');
 }
 </script>
 </body>
