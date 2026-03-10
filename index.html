@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>系统逻辑演算 v2.1.0 - Tease Edition</title>
     <style>
         :root {
@@ -11,23 +12,43 @@
             --bg: #f0f2f5;
         }
 
-        * { transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        * { 
+            transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1); 
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg);
+        }
 
         body {
-            margin: 0; height: 100vh;
             display: flex; justify-content: center; align-items: center;
-            background-color: var(--bg);
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #subliminal {
+            position: fixed; top: 0; left: 0; 
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            color: var(--danger);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; font-size: 1.8rem; font-weight: bold;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.1s ease;
         }
 
         .card {
             background: var(--glass);
             backdrop-filter: blur(10px);
-            padding: 40px;
+            padding: 40px 20px;
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            width: 360px;
+            width: 90%; max-width: 360px;
             text-align: center;
             border: 1px solid rgba(255,255,255,0.3);
             z-index: 100;
@@ -38,11 +59,8 @@
         .sub-text { font-size: 12px; color: #999; margin-bottom: 30px; }
 
         #inputWrapper {
-            display: block;
-            position: relative;
-            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            opacity: 1;
-            transform: translateY(0);
+            display: block; position: relative;
+            transition: all 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
         input {
@@ -50,7 +68,7 @@
             border: none; border-bottom: 2px solid #eee;
             background: transparent; text-align: center;
             font-size: 1.5rem; outline: none; margin-bottom: 20px;
-            color: #333;
+            color: #333; border-radius: 0;
         }
 
         button {
@@ -58,58 +76,54 @@
             padding: 12px 40px; border-radius: 30px;
             cursor: pointer; letter-spacing: 1px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            position: relative;
-            z-index: 101; 
+            position: relative; z-index: 101; 
+            -webkit-tap-highlight-color: transparent;
         }
 
-        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
-
-        #msg { margin-top: 25px; font-size: 0.9rem; color: #777; min-height: 40px; transition: color 0.3s; }
-
-        .corrupted { background-color: #050000 !important; filter: contrast(120%) brightness(80%); }
-
+        .corrupted { 
+            background-color: #000 !important; 
+            transition: background-color 0.3s ease;
+        }
+        
         .card-break {
-            background: rgba(0, 0, 0, 0.9) !important;
+            background: rgba(0, 0, 0, 0.98) !important;
             border-color: var(--danger) !important;
-            box-shadow: 0 0 50px var(--danger) !important;
-            transform: scale(1.05);
+            box-shadow: 0 0 60px rgba(255,0,0,0.4) !important;
         }
 
-        .pop-insane {
-            position: fixed; z-index: 9999;
-            background: #000; color: var(--danger);
-            border-left: 5px solid var(--danger);
-            padding: 15px 30px; font-size: 1.8rem;
-            font-weight: 900; letter-spacing: -1px;
-            box-shadow: 20px 20px 0 rgba(255,0,0,0.1);
-            pointer-events: none;
-            animation: glitch-anim 0.2s infinite;
-        }
-
-        @keyframes glitch-anim {
-            0% { clip-path: inset(10% 0 30% 0); transform: translate(-5px); }
-            50% { clip-path: inset(30% 0 10% 0); transform: translate(5px); }
-            100% { clip-path: inset(0 0 0 0); transform: translate(0); }
-        }
-
-        .shake-heavy { animation: shake-heavy 0.1s infinite alternate; }
+        .shake-heavy { animation: shake-heavy 0.2s infinite alternate ease-in-out; }
         @keyframes shake-heavy {
-            from { transform: translate(-8px, -8px) rotate(-1deg); }
-            to { transform: translate(8px, 8px) rotate(1deg); }
+            from { transform: translate(-5px, -3px); }
+            to { transform: translate(5px, 3px); }
         }
 
         .input-escaped {
-            transform: translateY(-500px) !important;
+            transform: translateY(-100vh) scale(0.3) !important;
             opacity: 0 !important;
-            pointer-events: none;
+        }
+
+        .pop-insane {
+            position: fixed; z-index: 9998; 
+            background: #000; color: var(--danger);
+            border-left: 5px solid var(--danger); padding: 10px 20px;
+            font-weight: 900; white-space: nowrap;
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
+            animation: glitch 0.3s infinite;
+        }
+        @keyframes glitch { 
+            0% { transform: skewX(0deg); } 
+            50% { transform: skewX(-10deg); filter: contrast(150%); } 
+            100% { transform: skewX(0deg); } 
         }
     </style>
 </head>
 <body>
 
+<div id="subliminal">月寒，我一直在看着你</div>
+
 <div class="card" id="mainCard">
     <h2 id="mainTitle">Logic System</h2>
-    <div class="sub-text">Encryption Level: Standard</div>
+    <div class="sub-text" id="subLabel">Encryption Level: Standard</div>
     
     <div id="inputWrapper">
         <input type="number" id="guessInput" placeholder="??">
@@ -121,10 +135,11 @@
 </div>
 
 <script>
-// 初始化：确保范围是 1 到 100
+// 初始化
 let target = Math.floor(Math.random() * 100) + 1; 
 let closeAttempts = 0; 
 let isInputEscaped = false; 
+let isAwakened = false; 
 
 const psychoTexts = ["月寒，盯着我看。", "你的心跳，我听到了。", "为什么想逃？", "这里只有我们。", "月寒...月寒...月寒...", "别动那个按钮。", "你是我的。", "嘘，别出声。"];
 
@@ -133,81 +148,117 @@ function check() {
     const wrapper = document.getElementById('inputWrapper');
     const card = document.getElementById('mainCard');
     const msg = document.getElementById('msg');
-    const body = document.body;
+    const title = document.getElementById('mainTitle');
+    const subLayer = document.getElementById('subliminal');
     const val = parseInt(input.value);
 
+    // 如果输入框飞了点按钮
     if (isInputEscaped) { triggerInsanity(); return; }
     if (isNaN(val)) return;
 
-    // --- 核心逻辑修正区 ---
-    if (val === target) {
-        triggerInsanity();
-    } else {
-        let diff = Math.abs(val - target);
+    // 随机闪烁
+    if (Math.random() < 0.05) {
+        subLayer.style.opacity = '1';
+        setTimeout(() => { subLayer.style.opacity = '0'; }, 150);
+    }
 
-        if (diff <= 5) {
-            // 接近时的特殊状态
-            body.classList.add('corrupted');
+    if (!isAwakened) {
+        // 第一阶段：伪装
+        if (val === target) {
+            isAwakened = true;
+            msg.innerText = "System: Analysing Entropy...";
+            setTimeout(() => {
+                title.innerText = "FOUND YOU";
+                title.style.color = "red";
+                document.getElementById('subLabel').innerText = "IDENTIFIED: YUE HAN";
+                msg.innerText = "“玩的开心吗，月寒？”";
+                // 仅在这里换一次数字，开启第二阶段
+                target = Math.floor(Math.random() * 100) + 1; 
+            }, 1000);
+        } else {
+            msg.innerText = val > target ? "反馈：你猜得太大了。" : "反馈：你猜得太小了。";
+        }
+    } else {
+        // 第二阶段：觉醒
+        let diff = Math.abs(val - target);
+        if (val === target) {
+            triggerInsanity();
+        } else if (diff <= 5) {
+            document.body.classList.add('corrupted');
             card.classList.add('shake-heavy');
-            card.style.borderColor = "rgba(255,0,0,0.5)";
             msg.style.color = "red";
-            msg.innerText = "“离我的心太近了...你在发抖吗，月寒？”";
+            msg.innerText = "“离我的心太近了...月寒。”";
             closeAttempts++;
             if (closeAttempts >= 3) {
                 isInputEscaped = true;
                 wrapper.classList.add('input-escaped');
-                msg.innerText = "“哎呀，输入框不见了...但你还没赢，对吧？”";
+                msg.innerText = "“哎呀，输入框不见了...这样你就能多看看我了。”";
             }
         } else {
-            // 普通提示：采用最直观的“猜大了/猜小了”描述
+            document.body.classList.remove('corrupted');
             card.classList.remove('shake-heavy');
             msg.style.color = "#777";
-            
-            if (val > target) {
-                msg.innerText = "反馈：你猜得太大了。";
-            } else {
-                msg.innerText = "反馈：你猜得太小了。";
-            }
+            msg.innerText = val > target ? "反馈：你猜得太大了。" : "反馈：你猜得太小了。";
         }
     }
-    // ----------------------
     input.value = '';
 }
 
 function triggerInsanity() {
     const card = document.getElementById('mainCard');
+    document.body.classList.add('corrupted');
     card.classList.add('card-break', 'shake-heavy');
-    document.getElementById('mainTitle').innerText = "FOUND YOU";
-    document.getElementById('mainTitle').style.color = "red";
-    setTimeout(() => alert("抓到你了。"), 100);
-    setTimeout(() => alert("月寒。"), 300);
+    document.getElementById('mainTitle').innerText = "抓到你了";
+    
+    setTimeout(() => alert("抓到你了。"), 200);
+    setTimeout(() => alert("月寒。"), 400);
+
     let count = 0;
     let timer = setInterval(() => {
         const div = document.createElement('div');
         div.className = 'pop-insane';
-        div.style.top = Math.random() * 80 + 10 + '%';
-        div.style.left = Math.random() * 80 + 10 + '%';
+        div.style.top = Math.random() * 90 + 'vh';
+        div.style.left = Math.random() * 70 + 'vw';
         div.innerText = psychoTexts[Math.floor(Math.random() * psychoTexts.length)];
         document.body.appendChild(div);
-        if (++count > 70) { clearInterval(timer); setTimeout(resetAll, 3000); }
-    }, 50);
+        if (++count > 50) { 
+            clearInterval(timer); 
+            setTimeout(resetAll, 3000); 
+        }
+    }, 80);
 }
 
+// 核心重置函数：确保回到“伪装”状态
 function resetAll() {
+    // 移除所有弹窗
     document.querySelectorAll('.pop-insane').forEach(e => e.remove());
+    
     const card = document.getElementById('mainCard');
     const wrapper = document.getElementById('inputWrapper');
+    const title = document.getElementById('mainTitle');
+    const subLabel = document.getElementById('subLabel');
+    const msg = document.getElementById('msg');
+    
+    // 1. 移除全屏黑化和卡片震动
     document.body.classList.remove('corrupted');
     card.classList.remove('card-break', 'shake-heavy');
-    wrapper.classList.remove('input-escaped'); 
-    document.getElementById('mainTitle').innerText = "Logic System";
-    document.getElementById('mainTitle').style.color = "#555";
-    document.getElementById('msg').innerText = "“刚才系统过载了。我们继续吧，月寒。”";
-    document.getElementById('msg').style.color = "#777";
+    card.style.borderColor = "rgba(255,255,255,0.3)";
     
+    // 2. 移除输入框飞走状态
+    wrapper.classList.remove('input-escaped'); 
+    
+    // 3. 彻底恢复文案（回到刚开始的样子）
+    title.innerText = "Logic System";
+    title.style.color = "#555";
+    subLabel.innerText = "Encryption Level: Standard";
+    msg.innerText = "“刚才系统过载了。我们继续吧，月寒。”";
+    msg.style.color = "#777";
+    
+    // 4. 重置所有逻辑状态
     target = Math.floor(Math.random() * 100) + 1; 
     closeAttempts = 0;
     isInputEscaped = false;
+    isAwakened = false; // 必须重置，否则系统不会重新“伪装”
 }
 </script>
 </body>
