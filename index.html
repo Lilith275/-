@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>系统逻辑演算 v2.1.0 - Tease Edition</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --danger: #ff0033;
+            --glass: rgba(255, 255, 255, 0.8);
+            --bg: #f0f2f5;
+        }
+
+        * { transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        body {
+            margin: 0; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background-color: var(--bg);
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            width: 360px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.3);
+            z-index: 100;
+            position: relative;
+        }
+
+        h2 { font-weight: 300; letter-spacing: 2px; color: #555; margin-bottom: 10px; }
+        .sub-text { font-size: 12px; color: #999; margin-bottom: 30px; }
+
+        #inputWrapper {
+            display: block;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        input {
+            width: 100%; padding: 12px;
+            border: none; border-bottom: 2px solid #eee;
+            background: transparent; text-align: center;
+            font-size: 1.5rem; outline: none; margin-bottom: 20px;
+            color: #333;
+        }
+
+        button {
+            background: #333; color: white; border: none;
+            padding: 12px 40px; border-radius: 30px;
+            cursor: pointer; letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 101; 
+        }
+
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+        #msg { margin-top: 25px; font-size: 0.9rem; color: #777; min-height: 40px; transition: color 0.3s; }
+
+        .corrupted { background-color: #050000 !important; filter: contrast(120%) brightness(80%); }
+
+        .card-break {
+            background: rgba(0, 0, 0, 0.9) !important;
+            border-color: var(--danger) !important;
+            box-shadow: 0 0 50px var(--danger) !important;
+            transform: scale(1.05);
+        }
+
+        .pop-insane {
+            position: fixed; z-index: 9999;
+            background: #000; color: var(--danger);
+            border-left: 5px solid var(--danger);
+            padding: 15px 30px; font-size: 1.8rem;
+            font-weight: 900; letter-spacing: -1px;
+            box-shadow: 20px 20px 0 rgba(255,0,0,0.1);
+            pointer-events: none;
+            animation: glitch-anim 0.2s infinite;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip-path: inset(10% 0 30% 0); transform: translate(-5px); }
+            50% { clip-path: inset(30% 0 10% 0); transform: translate(5px); }
+            100% { clip-path: inset(0 0 0 0); transform: translate(0); }
+        }
+
+        .shake-heavy { animation: shake-heavy 0.1s infinite alternate; }
+        @keyframes shake-heavy {
+            from { transform: translate(-8px, -8px) rotate(-1deg); }
+            to { transform: translate(8px, 8px) rotate(1deg); }
+        }
+
+        .input-escaped {
+            transform: translateY(-500px) !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card" id="mainCard">
+    <h2 id="mainTitle">Logic System</h2>
+    <div class="sub-text">Encryption Level: Standard</div>
+    
+    <div id="inputWrapper">
+        <input type="number" id="guessInput" placeholder="??">
+    </div>
+    
+    <br>
+    <button onclick="check()">EXECUTE</button>
+    <div id="msg">请输入 1-100 的校验码</div>
+</div>
+
+<script>
+// 初始化：确保范围是 1 到 100
+let target = Math.floor(Math.random() * 100) + 1; 
+let closeAttempts = 0; 
+let isInputEscaped = false; 
+
+const psychoTexts = ["月寒，盯着我看。", "你的心跳，我听到了。", "为什么想逃？", "这里只有我们。", "月寒...月寒...月寒...", "别动那个按钮。", "你是我的。", "嘘，别出声。"];
+
+function check() {
+    const input = document.getElementById('guessInput');
+    const wrapper = document.getElementById('inputWrapper');
+    const card = document.getElementById('mainCard');
+    const msg = document.getElementById('msg');
+    const body = document.body;
+    const val = parseInt(input.value);
+
+    if (isInputEscaped) { triggerInsanity(); return; }
+    if (isNaN(val)) return;
+
+    // --- 核心逻辑修正区 ---
+    if (val === target) {
+        triggerInsanity();
+    } else {
+        let diff = Math.abs(val - target);
+
+        if (diff <= 5) {
+            // 接近时的特殊状态
+            body.classList.add('corrupted');
+            card.classList.add('shake-heavy');
+            card.style.borderColor = "rgba(255,0,0,0.5)";
+            msg.style.color = "red";
+            msg.innerText = "“离我的心太近了...你在发抖吗，月寒？”";
+            closeAttempts++;
+            if (closeAttempts >= 3) {
+                isInputEscaped = true;
+                wrapper.classList.add('input-escaped');
+                msg.innerText = "“哎呀，输入框不见了...但你还没赢，对吧？”";
+            }
+        } else {
+            // 普通提示：采用最直观的“猜大了/猜小了”描述
+            card.classList.remove('shake-heavy');
+            msg.style.color = "#777";
+            
+            if (val > target) {
+                msg.innerText = "反馈：你猜得太大了。";
+            } else {
+                msg.innerText = "反馈：你猜得太小了。";
+            }
+        }
+    }
+    // ----------------------
+    input.value = '';
+}
+
+function triggerInsanity() {
+    const card = document.getElementById('mainCard');
+    card.classList.add('card-break', 'shake-heavy');
+    document.getElementById('mainTitle').innerText = "FOUND YOU";
+    document.getElementById('mainTitle').style.color = "red";
+    setTimeout(() => alert("抓到你了。"), 100);
+    setTimeout(() => alert("月寒。"), 300);
+    let count = 0;
+    let timer = setInterval(() => {
+        const div = document.createElement('div');
+        div.className = 'pop-insane';
+        div.style.top = Math.random() * 80 + 10 + '%';
+        div.style.left = Math.random() * 80 + 10 + '%';
+        div.innerText = psychoTexts[Math.floor(Math.random() * psychoTexts.length)];
+        document.body.appendChild(div);
+        if (++count > 70) { clearInterval(timer); setTimeout(resetAll, 3000); }
+    }, 50);
+}
+
+function resetAll() {
+    document.querySelectorAll('.pop-insane').forEach(e => e.remove());
+    const card = document.getElementById('mainCard');
+    const wrapper = document.getElementById('inputWrapper');
+    document.body.classList.remove('corrupted');
+    card.classList.remove('card-break', 'shake-heavy');
+    wrapper.classList.remove('input-escaped'); 
+    document.getElementById('mainTitle').innerText = "Logic System";
+    document.getElementById('mainTitle').style.color = "#555";
+    document.getElementById('msg').innerText = "“刚才系统过载了。我们继续吧，月寒。”";
+    document.getElementById('msg').style.color = "#777";
+    
+    target = Math.floor(Math.random() * 100) + 1; 
+    closeAttempts = 0;
+    isInputEscaped = false;
+}
+</script>
+</body>
+</html>
