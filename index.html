@@ -3,262 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>系统逻辑演算 v2.1.0 - Tease Edition</title>
+    <title>系统逻辑演算 v7.1</title>
     <style>
         :root {
-            --primary: #4a90e2;
             --danger: #ff0033;
-            --glass: rgba(255, 255, 255, 0.8);
+            --glass: rgba(255, 255, 255, 0.85);
             --bg: #f0f2f5;
         }
 
         * { transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1); box-sizing: border-box; }
 
-        html, body {
-            margin: 0; padding: 0;
-            width: 100vw; height: 100vh;
-            overflow: hidden;
-            background-color: var(--bg);
-        }
-
         body {
+            margin: 0; height: 100vh;
             display: flex; justify-content: center; align-items: center;
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            touch-action: manipulation;
+            background-color: var(--bg);
+            font-family: 'PingFang SC', sans-serif;
+            overflow: hidden;
         }
 
-        /* 1. 真正的全屏干扰层 */
         #subliminal {
-            position: fixed; top: 0; left: 0; 
-            width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(8px);
-            color: var(--danger);
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; color: #ff0000;
             display: flex; justify-content: center; align-items: center;
-            z-index: 9999; font-size: 1.8rem; font-weight: bold;
+            z-index: 10005; font-size: 4rem; font-weight: 900;
             opacity: 0; pointer-events: none;
-            transition: opacity 0.1s ease;
+            transition: none !important; 
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
         }
-
-        /* 2. 伪造的 alert 弹窗样式 (拒绝羞耻网址) */
-        #fakeAlert {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            background: #fff; width: 280px;
-            padding: 25px; border-radius: 15px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            text-align: center; z-index: 10001;
-            opacity: 0; pointer-events: none;
-            display: block;
-        }
-        #fakeAlert.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
-        #fakeAlert p { color: #333; font-size: 1.1rem; margin-bottom: 20px; font-weight: bold; }
-        #fakeAlert button { background: #333; color: #fff; border: none; padding: 8px 30px; border-radius: 20px; cursor: pointer; }
 
         .card {
             background: var(--glass);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             padding: 40px 20px;
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
             width: 90%; max-width: 360px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
             z-index: 100;
-            position: relative;
         }
 
-        h2 { font-weight: 300; letter-spacing: 2px; color: #555; margin-bottom: 10px; }
-        .sub-text { font-size: 12px; color: #999; margin-bottom: 30px; }
-
-        #inputWrapper { display: block; position: relative; transition: all 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
-
+        h2 { font-weight: 300; letter-spacing: 2px; color: #444; margin-bottom: 15px; }
+        #inputWrapper { transition: transform 0.8s ease-in, opacity 0.5s; }
         input {
             width: 100%; padding: 12px;
-            border: none; border-bottom: 2px solid #eee;
+            border: none; border-bottom: 2px solid #ddd;
             background: transparent; text-align: center;
-            font-size: 1.5rem; outline: none; margin-bottom: 20px;
-            color: #333; border-radius: 0;
+            font-size: 1.8rem; outline: none; margin-bottom: 20px;
         }
 
         button.exec-btn {
-            background: #333; color: white; border: none;
-            padding: 12px 40px; border-radius: 30px;
-            cursor: pointer; letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: #222; color: white; border: none;
+            padding: 14px 50px; border-radius: 35px;
+            cursor: pointer; font-weight: bold; position: relative;
+            z-index: 101;
         }
 
-        .corrupted { background-color: #000 !important; }
-        
-        .card-break {
-            background: rgba(0, 0, 0, 0.98) !important;
-            border-color: var(--danger) !important;
-            box-shadow: 0 0 60px rgba(255,0,0,0.4) !important;
+        .shaking { animation: heavy-shake 0.1s infinite; border: 1px solid var(--danger) !important; }
+        @keyframes heavy-shake {
+            0% { transform: translate(3px, 3px); }
+            50% { transform: translate(-3px, -3px); }
+            100% { transform: translate(0); }
         }
 
-        .shake-heavy { animation: shake-heavy 0.2s infinite alternate ease-in-out; }
-        @keyframes shake-heavy {
-            from { transform: translate(-5px, -3px); }
-            to { transform: translate(5px, 3px); }
-        }
+        .input-escaped { transform: translateY(-130vh) rotate(20deg) !important; opacity: 0; pointer-events: none; }
 
-        .input-escaped { transform: translateY(-100vh) scale(0.3) !important; opacity: 0 !important; }
+        .purgatory-bg { background: radial-gradient(circle, #2a0000 0%, #000000 100%) !important; }
 
         .pop-insane {
             position: fixed; z-index: 9998; 
-            background: #000; color: var(--danger);
-            border-left: 5px solid var(--danger); padding: 10px 20px;
-            font-weight: 900; white-space: nowrap;
-            box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
-            animation: glitch 0.3s infinite;
+            background: #000; 
+            border: 2px solid #ff0000; 
+            padding: 0; width: 220px; 
+            box-shadow: 0 0 20px rgba(255,0,0,0.5); 
+            font-family: 'Tahoma', sans-serif; 
+            pointer-events: none;
+            animation: glitch-crack 0.15s infinite;
         }
-        @keyframes glitch { 0% { transform: skewX(0deg); } 50% { transform: skewX(-10deg); } 100% { transform: skewX(0deg); } }
+
+        .pop-header { 
+            background: #ff0000; 
+            color: #000; 
+            padding: 3px 8px; font-size: 11px; font-weight: bold; 
+            text-transform: uppercase;
+        }
+
+        .pop-body { 
+            padding: 20px 10px; 
+            color: #ff0000; 
+            font-weight: 900; font-size: 1.2rem; text-align: center;
+            text-shadow: 0 0 5px rgba(255,0,0,0.8);
+        }
+
+        @keyframes glitch-crack {
+            0% { transform: translate(0) skew(0deg); }
+            20% { transform: translate(-3px, 1px) skew(5deg); clip-path: inset(5% 0 15% 0); }
+            40% { transform: translate(3px, -1px) skew(-5deg); clip-path: inset(15% 0 5% 0); }
+            100% { transform: translate(0) skew(0deg); }
+        }
+
+        /* 恐怖美化后的弹窗样式 */
+        .xp-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 20000; display: none;
+            backdrop-filter: blur(4px);
+        }
+        .xp-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            width: 310px; background: #000; border: 3px solid #ff0000;
+            box-shadow: 0 0 30px rgba(255,0,0,0.6), 12px 12px 0px #000; z-index: 20001; display: none;
+            opacity: 0;
+            transition: all 0.1s;
+        }
+        .xp-modal.show {
+            opacity: 1; transform: translate(-50%, -50%) scale(1);
+            animation: modal-jitter 0.2s infinite;
+        }
+        @keyframes modal-jitter {
+            0% { transform: translate(-50.5%, -49.5%) scale(1); }
+            50% { transform: translate(-49.5%, -50.5%) scale(1.01); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        .xp-m-header {
+            background: #ff0000; color: #000; padding: 8px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 12px; font-weight: 900; letter-spacing: 2px;
+            font-family: monospace;
+        }
+        .xp-m-body { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; background: #000; }
+        .xp-m-icon { font-size: 40px; color: #ff0000; margin-bottom: 15px; text-shadow: 0 0 10px #f00; }
+        .xp-m-text { font-size: 1.3rem; font-weight: 900; line-height: 1.4; color: #ff0000; text-shadow: 0 0 8px #f00; }
+        .xp-m-footer { padding: 20px; text-align: center; background: #000; }
+        .xp-m-btn {
+            padding: 10px 45px; background: #ff0000; color: #000; border: none;
+            box-shadow: 5px 5px 0px #fff; cursor: pointer; font-size: 14px; font-weight: 900;
+            transition: none !important;
+        }
+        .xp-m-btn:active { box-shadow: none; transform: translate(3px, 3px); }
     </style>
 </head>
 <body>
 
-<div id="subliminal">月寒，我一直在看着你</div>
-
-<div id="fakeAlert">
-    <p id="fakeAlertMsg">提示</p>
-    <button onclick="closeFakeAlert()">确定</button>
+<div id="modalOverlay" class="xp-overlay"></div>
+<div id="xpAlert" class="xp-modal">
+    <div class="xp-m-header">
+        <span>FATAL_ERROR</span>
+        <span style="cursor:pointer; font-size:18px;" onclick="closeXpAlert()">×</span>
+    </div>
+    <div class="xp-m-body">
+        <div class="xp-m-icon">×</div>
+        <div id="xpAlertText" class="xp-m-text"></div>
+    </div>
+    <div class="xp-m-footer">
+        <button class="xp-m-btn" onclick="closeXpAlert()">ACCESS</button>
+    </div>
 </div>
+
+<div id="subliminal">抓住你了，月寒</div>
 
 <div class="card" id="mainCard">
     <h2 id="mainTitle">Logic System</h2>
-    <div class="sub-text" id="subLabel">Encryption Level: Standard</div>
-    
     <div id="inputWrapper">
         <input type="number" id="guessInput" placeholder="??">
     </div>
-    
-    <br>
     <button class="exec-btn" onclick="check()">EXECUTE</button>
-    <div id="msg">请输入 1-100 的校验码</div>
+    <div id="msg" style="margin-top:20px; color:#888; font-size:0.9rem;">请输入 1-100 的校验码</div>
 </div>
 
 <script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let tinnitusOsc = null;
+let staticGain = null;
+let isMadnessRunning = false; // 状态锁：防止动画重复
+
+let xpCallback = null;
+function showXpAlert(text, callback = null) {
+    const modal = document.getElementById('xpAlert');
+    const overlay = document.getElementById('modalOverlay');
+    document.getElementById('xpAlertText').innerHTML = text.replace(/\n/g, '<br>');
+    
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+    setTimeout(() => modal.classList.add('show'), 10);
+    
+    xpCallback = callback;
+}
+
+function closeXpAlert() {
+    const modal = document.getElementById('xpAlert');
+    const overlay = document.getElementById('modalOverlay');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        overlay.style.display = 'none';
+        if (xpCallback) {
+            const cb = xpCallback;
+            xpCallback = null;
+            cb();
+        }
+    }, 100);
+}
+
+function startHighTinnitus() {
+    if (tinnitusOsc) return;
+    tinnitusOsc = audioCtx.createOscillator();
+    staticGain = audioCtx.createGain();
+    tinnitusOsc.type = 'sine';
+    tinnitusOsc.frequency.setValueAtTime(11000, audioCtx.currentTime);
+    staticGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    staticGain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2);
+    tinnitusOsc.connect(staticGain);
+    staticGain.connect(audioCtx.destination);
+    tinnitusOsc.start();
+}
+
+function stopTinnitus() {
+    if (tinnitusOsc) {
+        staticGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+        setTimeout(() => { tinnitusOsc.stop(); tinnitusOsc = null; }, 500);
+    }
+}
+
+function playGlitchSnap() {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(Math.random() * 400 + 50, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+}
+
 let target = Math.floor(Math.random() * 100) + 1; 
 let closeAttempts = 0; 
 let isInputEscaped = false; 
 let isAwakened = false; 
-
-const psychoTexts = ["月寒，盯着我看。", "你的心跳，我听到了。", "为什么想逃？", "这里只有我们。", "月寒...月寒...月寒...", "别动那个按钮。", "你是我的。", "嘘，别出声。"];
-
-// 弹窗队列控制
-let alertQueue = [];
-function customAlert(text) {
-    alertQueue.push(text);
-    if (alertQueue.length === 1) showNextAlert();
-}
-
-function showNextAlert() {
-    if (alertQueue.length === 0) return;
-    document.getElementById('fakeAlertMsg').innerText = alertQueue[0];
-    document.getElementById('fakeAlert').classList.add('show');
-}
-
-function closeFakeAlert() {
-    document.getElementById('fakeAlert').classList.remove('show');
-    alertQueue.shift();
-    setTimeout(showNextAlert, 300); // 间隔一点时间显示下一个
-}
+let isProcessing = false;
 
 function check() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (isProcessing) return;
+
+    if (isInputEscaped) { 
+        runEndSequence(); 
+        return; 
+    }
+
     const input = document.getElementById('guessInput');
     const wrapper = document.getElementById('inputWrapper');
     const card = document.getElementById('mainCard');
     const msg = document.getElementById('msg');
     const title = document.getElementById('mainTitle');
-    const subLayer = document.getElementById('subliminal');
     const val = parseInt(input.value);
 
-    if (isInputEscaped) { triggerInsanity(); return; }
     if (isNaN(val)) return;
-
-    if (Math.random() < 0.05) {
-        subLayer.style.opacity = '1';
-        setTimeout(() => { subLayer.style.opacity = '0'; }, 150);
-    }
 
     if (!isAwakened) {
         if (val === target) {
             isAwakened = true;
-            msg.innerText = "System: Analysing Entropy...";
+            isProcessing = true;
+            msg.innerText = "Analysing System Identity...";
+            
             setTimeout(() => {
-                title.innerText = "FOUND YOU";
-                title.style.color = "red";
-                document.getElementById('subLabel').innerText = "IDENTIFIED: YUE HAN";
-                msg.innerText = "“玩的开心吗，月寒？”";
-                target = Math.floor(Math.random() * 100) + 1; 
-            }, 1000);
+                const sub = document.getElementById('subliminal');
+                sub.innerText = "月寒，抓到你了"; 
+                sub.style.opacity = "1";
+                
+                setTimeout(() => {
+                    sub.style.opacity = "0"; 
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            title.innerText = "FOUND YOU";
+                            title.style.color = "red";
+                            showXpAlert("FOUND YOU. \n抓到你了。", () => {
+                                msg.innerText = "“...是你吗？”";
+                                target = Math.floor(Math.random() * 100) + 1;
+                                isProcessing = false;
+                            });
+                        }, 50); 
+                    });
+                }, 60); 
+            }, 500);
         } else {
-            msg.innerText = val > target ? "反馈：你猜得太大了。" : "反馈：你猜得太小了。";
+            msg.innerText = val > target ? "反馈：猜大了。" : "反馈：猜小了。";
         }
     } else {
-        let diff = Math.abs(val - target);
         if (val === target) {
-            triggerInsanity();
-        } else if (diff <= 5) {
-            document.body.classList.add('corrupted');
-            card.classList.add('shake-heavy');
-            msg.style.color = "red";
-            msg.innerText = "“离我的心太近了...月寒。”";
+            runEndSequence();
+        } else if (Math.abs(val - target) <= 5) {
+            startHighTinnitus(); 
+            card.classList.add('shaking'); 
+            msg.innerText = "“你猜中了...是不是就要离开我了？”"; 
             closeAttempts++;
-            if (closeAttempts >= 3) {
+            if (closeAttempts >= 2) { 
                 isInputEscaped = true;
                 wrapper.classList.add('input-escaped');
-                msg.innerText = "“哎呀，输入框不见了...这样你就能多看看我了。”";
+                msg.innerText = "“别猜了...求你。”"; 
             }
         } else {
-            document.body.classList.remove('corrupted');
-            card.classList.remove('shake-heavy');
-            msg.style.color = "#777";
-            msg.innerText = val > target ? "反馈：你猜得太大了。" : "反馈：你猜得太小了。";
+            card.classList.remove('shaking');
+            msg.innerText = val > target ? "反馈 : 猜大了。" : "反馈 : 猜小了。";
         }
     }
     input.value = '';
 }
 
-function triggerInsanity() {
-    const card = document.getElementById('mainCard');
-    document.body.classList.add('corrupted');
-    card.classList.add('card-break', 'shake-heavy');
-    document.getElementById('mainTitle').innerText = "抓到你了";
+function runEndSequence() {
+    if (isMadnessRunning) return; // 拦截重复执行
+    isProcessing = true;
+    staticGain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 1);
     
-    // 使用自定义弹窗替换 alert
-    customAlert("抓到你了。");
-    customAlert("月寒。");
+    showXpAlert("月寒。", () => {
+        showXpAlert("你觉得...你能逃掉吗？", () => {
+            showXpAlert("<span style='font-size:2rem'>抓 住 你 了</span>", () => {
+                startGlitchMadness();
+            });
+        });
+    });
+}
+
+function startGlitchMadness() {
+    if (isMadnessRunning) return;
+    isMadnessRunning = true;
+
+    document.body.classList.add('purgatory-bg');
+    document.getElementById('mainCard').style.opacity = "0";
 
     let count = 0;
+    const phrases = ["抓住你了", "月寒", "别走", "只有我们", "看着我", "逃不掉的", "他已经死了", "死人不会说爱", "我们的灵魂", "生生世世", "只有我", "你是我的", "不要闭眼","求你爱我好吗？", "FATAL_ERROR: SOUL_LOCKED", "检测到逃跑意图", "正在重写记忆", "除了我你一一无所有","他死得很安静", "我亲手送走了你的‘过去’", "月寒，你是我的礼物"];
+    
     let timer = setInterval(() => {
         const div = document.createElement('div');
         div.className = 'pop-insane';
-        div.style.top = Math.random() * 90 + 'vh';
-        div.style.left = Math.random() * 70 + 'vw';
-        div.innerText = psychoTexts[Math.floor(Math.random() * psychoTexts.length)];
+        div.style.top = Math.random() * 85 + 'vh';
+        div.style.left = Math.random() * 75 + 'vw';
+        div.style.transform = `rotate(${Math.random()*30-15}deg) scale(${0.8 + Math.random()*0.5})`;
+        div.innerHTML = `<div class="pop-header">CRITICAL_ERROR</div><div class="pop-body">${phrases[Math.floor(Math.random() * phrases.length)]}</div>`;
         document.body.appendChild(div);
-        if (++count > 50) { clearInterval(timer); setTimeout(resetAll, 3000); }
-    }, 80);
+        playGlitchSnap();
+
+        if (++count > 120) { 
+            clearInterval(timer); 
+            setTimeout(() => {
+                stopTinnitus();
+                resetToSamsara();
+            }, 3500); 
+        }
+    }, 35);
 }
 
-function resetAll() {
+function resetToSamsara() {
     document.querySelectorAll('.pop-insane').forEach(e => e.remove());
+    document.body.classList.remove('purgatory-bg');
+    document.body.style.backgroundColor = "#f0f2f5";
     const card = document.getElementById('mainCard');
-    const wrapper = document.getElementById('inputWrapper');
-    document.body.classList.remove('corrupted');
-    card.classList.remove('card-break', 'shake-heavy');
-    wrapper.classList.remove('input-escaped'); 
+    card.style.opacity = "1";
+    card.classList.remove('shaking');
+    document.getElementById('inputWrapper').classList.remove('input-escaped');
     document.getElementById('mainTitle').innerText = "Logic System";
-    document.getElementById('mainTitle').style.color = "#555";
-    document.getElementById('subLabel').innerText = "Encryption Level: Standard";
-    document.getElementById('msg').innerText = "“系统重启完成。继续吧，月寒。”";
-    target = Math.floor(Math.random() * 100) + 1; 
-    closeAttempts = 0;
-    isInputEscaped = false;
+    document.getElementById('mainTitle').style.color = "#444";
+    document.getElementById('msg').innerText = "“刚才系统故障了，我们继续吧，月寒。”";
+    
+    // 重置状态
     isAwakened = false;
-    alertQueue = []; // 清空弹窗队列
-    document.getElementById('fakeAlert').classList.remove('show');
+    isInputEscaped = false;
+    closeAttempts = 0;
+    target = Math.floor(Math.random() * 100) + 1;
+    isProcessing = false;
+    isMadnessRunning = false; // 解锁，允许下次循环
 }
 </script>
 </body>
